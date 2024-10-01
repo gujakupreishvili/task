@@ -17,23 +17,20 @@ interface Container {
 
 export default function Home() {
   const [checkCol, setCheckCol] = useState(false);
-  const [selectedColors, setSelectedColors] = useState<Container[]>(() => {
-    const savedColors = localStorage.getItem("selectedColors");
-    return savedColors ? JSON.parse(savedColors) : [];
-  });
+  const [selectedColors, setSelectedColors] = useState<Container[]>([]);
   const [tasks, setTasks] = useState<{ [key: number]: string }>({});
   const [todos, setTodos] = useState<{ [key: number]: TodoItem[] }>({});
   const [mounted, setMounted] = useState(false); 
 
   useEffect(() => {
+    const savedColors = localStorage.getItem("selectedColors");
+    if (savedColors) {
+      setSelectedColors(JSON.parse(savedColors));
+    }
     const savedTodos = localStorage.getItem("todos");
     if (savedTodos) {
       setTodos(JSON.parse(savedTodos));
     }
-  }, []);
-
-
-  useEffect(() => {
     setMounted(true);
   }, []);
 
