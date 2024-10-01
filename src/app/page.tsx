@@ -1,101 +1,193 @@
-import Image from "next/image";
+"use client";
+import { useState, ChangeEvent, KeyboardEvent, useEffect } from "react";
+import { FaPlus } from "react-icons/fa";
+import { IoMdCloudDownload } from "react-icons/io";
+import { TiDelete } from "react-icons/ti";
+import { Reorder } from "framer-motion"
+
+interface TodoItem {
+  text: string;
+  checked: boolean;
+}
+
+interface Container {
+  id: number;
+  color: string;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [checkCol, setCheckCol] = useState(false);
+  const [selectedColors, setSelectedColors] = useState<Container[]>(() => {
+    const savedColors = localStorage.getItem("selectedColors");
+    return savedColors ? JSON.parse(savedColors) : [];
+  });
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const [tasks, setTasks] = useState<{ [key: number]: string }>({});
+  const [todos, setTodos] = useState<{ [key: number]: TodoItem[] }>({});
+
+  useEffect(() => {
+    const savedTodos = localStorage.getItem("todos");
+    if (savedTodos) {
+      setTodos(JSON.parse(savedTodos));
+    }
+  }, []);
+
+  const handleCol = () => {
+    setCheckCol(!checkCol);
+  };
+
+  const handleColorSelect = (color: string) => {
+    const lastIndex = selectedColors[selectedColors.length - 1]?.id || 0;
+    const newCont = {
+      id: lastIndex + 1,
+      color: color,
+    };
+    const updatedColors = [...selectedColors, newCont];
+    setSelectedColors(updatedColors);
+    localStorage.setItem("selectedColors", JSON.stringify(updatedColors));
+  };
+
+  const handleEnterKeyPress = (
+    event: KeyboardEvent<HTMLInputElement>,
+    id: number
+  ) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      addTask(id);
+    }
+  };
+
+  const addTask = (id: number) => {
+    const newTask = { text: tasks[id], checked: false };
+
+    if (!newTask.text.trim()) {
+      alert("Please write something");
+      return;
+    }
+
+    const updatedTodos = {
+      ...todos,
+      [id]: [...(todos[id] || []), newTask],
+    };
+
+    setTodos(updatedTodos);
+    localStorage.setItem("todos", JSON.stringify(updatedTodos));
+    setTasks({ ...tasks, [id]: "" });
+  };
+
+  const removeItem = (id: number, index: number) => {
+    if (todos[id][index].checked) {
+      const updatedTodos = todos[id].filter((_, idx) => idx !== index);
+      const newTodos = { ...todos, [id]: updatedTodos };
+      setTodos(newTodos);
+      localStorage.setItem("todos", JSON.stringify(newTodos));
+    } else {
+      alert("Please check the item first");
+    }
+  };
+
+  const handleCheckboxChange = (id: number, index: number) => {
+    const updatedTodos = todos[id].map((item, idx) =>
+      idx === index ? { ...item, checked: !item.checked } : item
+    );
+    const newTodos = { ...todos, [id]: updatedTodos };
+    setTodos(newTodos);
+    localStorage.setItem("todos", JSON.stringify(newTodos));
+  };
+
+  const handleDeleteColor = (colorId: number) => {
+    const updatedColors = selectedColors.filter((color) => color.id !== colorId);
+    setSelectedColors(updatedColors);
+    localStorage.setItem("selectedColors", JSON.stringify(updatedColors));
+    const { [colorId]: _, ...updatedTodos } = todos;
+    setTodos(updatedTodos);
+    localStorage.setItem("todos", JSON.stringify(updatedTodos));
+  };
+  
+
+  return (
+    <>
+      <div className="absolute right-[25px] bottom-[25px] bg-black w-[40px] h-[40px] flex items-center justify-center rounded-md cursor-pointer">
+        <FaPlus className="text-white" onClick={handleCol} />
+      </div>
+
+      {checkCol && (
+        <div className="flex flex-col absolute right-[35px] bottom-[80px] gap-[10px]">
+          <div
+            className="bg-yellow-400 w-[35px] h-[35px] rounded-2xl cursor-pointer"
+            onClick={() => handleColorSelect("yellow-400")}
+          ></div>
+          <div
+            className="bg-red-500 w-[35px] h-[35px] rounded-2xl cursor-pointer"
+            onClick={() => handleColorSelect("red-500")}
+          ></div>
+          <div
+            className="bg-purple-500 w-[35px] h-[35px] rounded-2xl cursor-pointer"
+            onClick={() => handleColorSelect("purple-500")}
+          ></div>
+          <div
+            className="bg-pink-500 w-[35px] h-[35px] rounded-2xl cursor-pointer"
+            onClick={() => handleColorSelect("pink-500")}
+          ></div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      )}
+
+      <Reorder.Group className="flex flex-col justify-center items-center gap-4 mt-8" axis="y" values={selectedColors} onReorder={setSelectedColors} >
+        {selectedColors.map((color, index) => (
+          <Reorder.Item key={color.id} value={color} className={`w-[300px]  bg-${color.color} flex flex-col pb-[25px]`}  >
+            <div className="flex justify-end py-[12px] px-[12px] gap-[10px]">
+              <TiDelete className="text-[23px] text-white cursor-pointer" onClick={()=>handleDeleteColor(color.id)} />
+              <IoMdCloudDownload className="text-[23px] text-white cursor-pointer" />
+            </div>
+            <div className="flex justify-center mt-[10px] gap-[20px]">
+              <input
+                type="text"
+                className="p-2 border border-gray-400 rounded"
+                placeholder="Enter your task..."
+                value={tasks[color.id] || ""}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setTasks({ ...tasks, [color.id]: e.target.value })
+                }
+                onKeyPress={(e) => handleEnterKeyPress(e, color.id)}
+              />
+              <button
+                className="bg-green-500 w-[60px] h-[40px] rounded-md"
+                onClick={() => addTask(color.id)}
+              >
+                Add
+              </button>
+            </div>
+            <div className="flex flex-col items-center justify-center">
+              {todos[color.id]?.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between w-full px-[20px] py-[10px]"
+                >
+                  <input
+                    type="checkbox"
+                    id={`checkbox-input-${color.id}-${idx}`}
+                    className="custom-checkbox"
+                    checked={item.checked}
+                    onChange={() => handleCheckboxChange(color.id, idx)}
+                  />
+                  <label htmlFor={`checkbox-input-${color.id}-${idx}`}></label>
+                  <p
+                    className={`text-[20px] w-[150px] text-center text-white ${
+                      item.checked ? "line-through" : ""
+                    }`}
+                  >
+                    {item.text}
+                  </p>
+                  <TiDelete
+                    className="cursor-pointer text-[22px] text-white"
+                    onClick={() => removeItem(color.id, idx)}
+                  />
+                </div>
+              ))}
+            </div>
+          </Reorder.Item>
+        ))}
+      </Reorder.Group>
+    </>
   );
 }
