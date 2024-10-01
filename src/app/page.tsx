@@ -99,7 +99,8 @@ export default function Home() {
     const updatedColors = selectedColors.filter((color) => color.id !== colorId);
     setSelectedColors(updatedColors);
     localStorage.setItem("selectedColors", JSON.stringify(updatedColors));
-    const { [colorId]: _, ...updatedTodos } = todos;
+    const {  ...updatedTodos } = todos;
+
     setTodos(updatedTodos);
     localStorage.setItem("todos", JSON.stringify(updatedTodos));
   };
@@ -133,7 +134,8 @@ export default function Home() {
       )}
 
       <Reorder.Group className="flex flex-col justify-center items-center gap-4 mt-8" axis="y" values={selectedColors} onReorder={setSelectedColors} >
-        {selectedColors.map((color, index) => (
+        {selectedColors.map((color) => (
+
           <Reorder.Item key={color.id} value={color} className={`w-[300px]  bg-${color.color} flex flex-col pb-[25px]`}  >
             <div className="flex justify-end py-[12px] px-[12px] gap-[10px]">
               <TiDelete className="text-[23px] text-white cursor-pointer" onClick={()=>handleDeleteColor(color.id)} />
