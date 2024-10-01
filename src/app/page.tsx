@@ -3,7 +3,7 @@ import { useState, ChangeEvent, KeyboardEvent, useEffect } from "react";
 import { FaPlus } from "react-icons/fa";
 import { IoMdCloudDownload } from "react-icons/io";
 import { TiDelete } from "react-icons/ti";
-import { Reorder } from "framer-motion"
+import { Reorder } from "framer-motion";
 
 interface TodoItem {
   text: string;
@@ -21,15 +21,20 @@ export default function Home() {
     const savedColors = localStorage.getItem("selectedColors");
     return savedColors ? JSON.parse(savedColors) : [];
   });
-
   const [tasks, setTasks] = useState<{ [key: number]: string }>({});
   const [todos, setTodos] = useState<{ [key: number]: TodoItem[] }>({});
+  const [mounted, setMounted] = useState(false); 
 
   useEffect(() => {
     const savedTodos = localStorage.getItem("todos");
     if (savedTodos) {
       setTodos(JSON.parse(savedTodos));
     }
+  }, []);
+
+
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   const handleCol = () => {
@@ -104,7 +109,6 @@ export default function Home() {
     setTodos(updatedTodos);
     localStorage.setItem("todos", JSON.stringify(updatedTodos));
   };
-  
 
   return (
     <>
@@ -133,63 +137,77 @@ export default function Home() {
         </div>
       )}
 
-      <Reorder.Group className="flex flex-col justify-center items-center gap-4 mt-8" axis="y" values={selectedColors} onReorder={setSelectedColors} >
-        {selectedColors.map((color) => (
-
-          <Reorder.Item key={color.id} value={color} className={`w-[300px]  bg-${color.color} flex flex-col pb-[25px]`}  >
-            <div className="flex justify-end py-[12px] px-[12px] gap-[10px]">
-              <TiDelete className="text-[23px] text-white cursor-pointer" onClick={()=>handleDeleteColor(color.id)} />
-              <IoMdCloudDownload className="text-[23px] text-white cursor-pointer" />
-            </div>
-            <div className="flex justify-center mt-[10px] gap-[20px]">
-              <input
-                type="text"
-                className="p-2 border border-gray-400 rounded"
-                placeholder="Enter your task..."
-                value={tasks[color.id] || ""}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setTasks({ ...tasks, [color.id]: e.target.value })
-                }
-                onKeyPress={(e) => handleEnterKeyPress(e, color.id)}
-              />
-              <button
-                className="bg-green-500 w-[60px] h-[40px] rounded-md"
-                onClick={() => addTask(color.id)}
-              >
-                Add
-              </button>
-            </div>
-            <div className="flex flex-col items-center justify-center">
-              {todos[color.id]?.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between w-full px-[20px] py-[10px]"
+      {mounted && (
+        <Reorder.Group
+          className="flex flex-col justify-center items-center gap-4 mt-8"
+          axis="y"
+          values={selectedColors}
+          onReorder={setSelectedColors}
+        >
+          {selectedColors.map((color) => (
+            <Reorder.Item
+              key={color.id}
+              value={color}
+              className={`w-[300px] bg-${color.color} flex flex-col pb-[25px]`}
+            >
+              <div className="flex justify-end py-[12px] px-[12px] gap-[10px]">
+                <TiDelete
+                  className="text-[23px] text-white cursor-pointer"
+                  onClick={() => handleDeleteColor(color.id)}
+                />
+                <IoMdCloudDownload className="text-[23px] text-white cursor-pointer" />
+              </div>
+              <div className="flex justify-center mt-[10px] gap-[20px]">
+                <input
+                  type="text"
+                  className="p-2 border border-gray-400 rounded"
+                  placeholder="Enter your task..."
+                  value={tasks[color.id] || ""}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setTasks({ ...tasks, [color.id]: e.target.value })
+                  }
+                  onKeyPress={(e) => handleEnterKeyPress(e, color.id)}
+                />
+                <button
+                  className="bg-green-500 w-[60px] h-[40px] rounded-md"
+                  onClick={() => addTask(color.id)}
                 >
-                  <input
-                    type="checkbox"
-                    id={`checkbox-input-${color.id}-${idx}`}
-                    className="custom-checkbox"
-                    checked={item.checked}
-                    onChange={() => handleCheckboxChange(color.id, idx)}
-                  />
-                  <label htmlFor={`checkbox-input-${color.id}-${idx}`}></label>
-                  <p
-                    className={`text-[20px] w-[150px] text-center text-white ${
-                      item.checked ? "line-through" : ""
-                    }`}
+                  Add
+                </button>
+              </div>
+              <div className="flex flex-col items-center justify-center">
+                {todos[color.id]?.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between w-full px-[20px] py-[10px]"
                   >
-                    {item.text}
-                  </p>
-                  <TiDelete
-                    className="cursor-pointer text-[22px] text-white"
-                    onClick={() => removeItem(color.id, idx)}
-                  />
-                </div>
-              ))}
-            </div>
-          </Reorder.Item>
-        ))}
-      </Reorder.Group>
+                    <input
+                      type="checkbox"
+                      id={`checkbox-input-${color.id}-${idx}`}
+                      className="custom-checkbox"
+                      checked={item.checked}
+                      onChange={() => handleCheckboxChange(color.id, idx)}
+                    />
+                    <label htmlFor={`checkbox-input-${color.id}-${idx}`}></label>
+                    <p
+                      className={`text-[20px] w-[150px] text-center text-white ${
+                        item.checked ? "line-through" : ""
+                      }`}
+                    >
+                      {item.text}
+                    </p>
+                    <TiDelete
+                      className="cursor-pointer text-[22px] text-white"
+                      onClick={() => removeItem(color.id, idx)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </Reorder.Item>
+          ))}
+        </Reorder.Group>
+      )}
     </>
   );
 }
+
