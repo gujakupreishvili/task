@@ -4,6 +4,8 @@ import { FaPlus } from "react-icons/fa";
 import { IoMdCloudDownload } from "react-icons/io";
 import { TiDelete } from "react-icons/ti";
 import { Reorder } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css"; // Import CSS for toastify
 
 interface TodoItem {
   text: string;
@@ -20,7 +22,7 @@ export default function Home() {
   const [selectedColors, setSelectedColors] = useState<Container[]>([]);
   const [tasks, setTasks] = useState<{ [key: number]: string }>({});
   const [todos, setTodos] = useState<{ [key: number]: TodoItem[] }>({});
-  const [mounted, setMounted] = useState(false); 
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const savedColors = localStorage.getItem("selectedColors");
@@ -63,7 +65,7 @@ export default function Home() {
     const newTask = { text: tasks[id], checked: false };
 
     if (!newTask.text.trim()) {
-      alert("Please write something");
+      toast.error("Please write something");
       return;
     }
 
@@ -75,6 +77,7 @@ export default function Home() {
     setTodos(updatedTodos);
     localStorage.setItem("todos", JSON.stringify(updatedTodos));
     setTasks({ ...tasks, [id]: "" });
+    toast.success("Task added successfully!");
   };
 
   const removeItem = (id: number, index: number) => {
@@ -83,8 +86,9 @@ export default function Home() {
       const newTodos = { ...todos, [id]: updatedTodos };
       setTodos(newTodos);
       localStorage.setItem("todos", JSON.stringify(newTodos));
+      toast.success("Task removed successfully!"); 
     } else {
-      alert("Please check the item first");
+      toast.warn("Please check the item first");
     }
   };
 
@@ -101,14 +105,32 @@ export default function Home() {
     const updatedColors = selectedColors.filter((color) => color.id !== colorId);
     setSelectedColors(updatedColors);
     localStorage.setItem("selectedColors", JSON.stringify(updatedColors));
-    const {  ...updatedTodos } = todos;
+    const { ...updatedTodos } = todos;
 
     setTodos(updatedTodos);
     localStorage.setItem("todos", JSON.stringify(updatedTodos));
   };
 
+  const handleDownloadTodos = (colorId: number) => {
+    const todoList = todos[colorId];
+    if (!todoList || todoList.length === 0) {
+      toast.error("No tasks to download.");
+      return;
+    }
+
+    const text = todoList.map((todo) => todo.text).join("\n");
+
+    const blob = new Blob([text], { type: "text/plain" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `todos_${colorId}.txt`;
+    link.click();
+  };
+
   return (
     <>
+      <ToastContainer />
+
       <div className="absolute right-[25px] bottom-[25px] bg-black w-[40px] h-[40px] flex items-center justify-center rounded-md cursor-pointer">
         <FaPlus className="text-white" onClick={handleCol} />
       </div>
@@ -152,7 +174,10 @@ export default function Home() {
                   className="text-[23px] text-white cursor-pointer"
                   onClick={() => handleDeleteColor(color.id)}
                 />
-                <IoMdCloudDownload className="text-[23px] text-white cursor-pointer" />
+                <IoMdCloudDownload
+                  className="text-[23px] text-white cursor-pointer"
+                  onClick={() => handleDownloadTodos(color.id)}
+                />
               </div>
               <div className="flex justify-center mt-[10px] gap-[20px]">
                 <input
@@ -207,4 +232,6 @@ export default function Home() {
     </>
   );
 }
+
+
 
