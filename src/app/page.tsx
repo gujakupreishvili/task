@@ -5,7 +5,7 @@ import { IoMdCloudDownload } from "react-icons/io";
 import { TiDelete } from "react-icons/ti";
 import { Reorder } from "framer-motion";
 import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"; // Import CSS for toastify
+import "react-toastify/dist/ReactToastify.css";
 
 interface TodoItem {
   text: string;
